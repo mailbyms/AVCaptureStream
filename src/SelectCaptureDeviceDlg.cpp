@@ -7,7 +7,6 @@
 #include <iostream>
 
 #include "DeviceEnumerator.h"
-#pragma comment(lib, "EnumDevice.lib")
 
 // CSelectCaptureDeviceDlg ¶Ô»°¿ò
 

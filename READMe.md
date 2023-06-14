@@ -7,12 +7,18 @@
 
 ## 二、项目建立
 Visual Studio 2017， Windows 10，Thinkpad X13 自带摄像头/话筒，台式机+罗技c270 USB 摄像头， 正常运行
-- IDE 设置	
-	- 项目属性，切换到 Debug - Win32。注意项目自带的 ffmpeg 库是 32 位的，版本为 December 5, 2014, FFmpeg 2.5 https://ffmpeg.org/index.html#news
+- 项目原来自带的 ffmpeg 库是 32 位的，版本为 December 5, 2014, FFmpeg 2.5 https://ffmpeg.org/index.html#news 。现改为 64 位 FFmpeg 4.3.2，编译会有函数过旧的警告，可忽略
+- 下载 FFMPEG 64位 SDK (https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-4.3.2-full_build-shared.7z)，并解压到 C 盘根目录下
+
+- IDE 添加 FFMPEG SDK:
+	
+	- 项目属性，切换到 Debug - x64
 	  ```
+	  C/C++
+	      常规->附加目录：增加 ffmpeg 的 include 目录，例如"C:\ffmpeg-4.3.2\include"
 	  链接器
-	      常规：输出文件，恢复为IDE默认的目录
-		  高级：映像具有安全异常处理程序，改为否
-		  调试: 环境，改为 PATH=%PATH%;..\bin （自带的 ffmpeg dll 库在 ..\bin）
+	      常规->附加库目录：增加 ffmpeg 的 lib 目录，例如"C:\ffmpeg-4.3.2\lib"
+	  调试
+	      环境：PATH=%PATH%;C:\ffmpeg-4.3.2\bin
 	  ```
 

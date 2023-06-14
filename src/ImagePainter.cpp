@@ -209,14 +209,14 @@ BOOL CImagePainter::Play(AVStream * st, AVFrame * pFrame)
 		m_nRgbSize = nRgbSize;
 	}
 
-    if(st->codec->pix_fmt != PIX_FMT_BGR24)
+    if(st->codec->pix_fmt != AV_PIX_FMT_BGR24)
 	{
 		if(img_convert_ctx == NULL)
 		{
 			img_convert_ctx = sws_getContext(st->codec->width, st->codec->height,
 			/*PIX_FMT_YUV420P*/st->codec->pix_fmt,
 			st->codec->width, st->codec->height,
-			PIX_FMT_BGR24,
+			AV_PIX_FMT_BGR24,
 			SWS_BICUBIC, NULL, NULL, NULL);
 
 			if (img_convert_ctx == NULL)

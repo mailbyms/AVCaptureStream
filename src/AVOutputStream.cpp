@@ -94,7 +94,7 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 			return false;
 		}
 		pCodecCtx = avcodec_alloc_context3(pCodec);
-		pCodecCtx->pix_fmt = PIX_FMT_YUV420P;
+		pCodecCtx->pix_fmt = AV_PIX_FMT_YUV420P;
 		pCodecCtx->width = m_width;
 		pCodecCtx->height = m_height;
 		pCodecCtx->time_base.num = 1;
@@ -103,7 +103,7 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 		pCodecCtx->gop_size = m_gopsize;
 		/* Some formats want stream headers to be separate. */
 		if (ofmt_ctx->oformat->flags & AVFMT_GLOBALHEADER)
-			pCodecCtx->flags |= CODEC_FLAG_GLOBAL_HEADER;
+			pCodecCtx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
 
 		AVDictionary *param = 0;
@@ -154,8 +154,8 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 
 		//Initialize the buffer to store YUV frames to be encoded.
 		pFrameYUV = av_frame_alloc();
-		m_out_buffer = (uint8_t *)av_malloc(avpicture_get_size(PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height));
-		avpicture_fill((AVPicture *)pFrameYUV, m_out_buffer, PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height);
+		m_out_buffer = (uint8_t *)av_malloc(avpicture_get_size(AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height));
+		avpicture_fill((AVPicture *)pFrameYUV, m_out_buffer, AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height);
 	}
 
 	if(m_audio_codec_id != 0)
@@ -184,7 +184,7 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 
 		/* Some formats want stream headers to be separate. */
 		if (ofmt_ctx->oformat->flags & AVFMT_GLOBALHEADER)
-			pCodecCtx_a->flags |= CODEC_FLAG_GLOBAL_HEADER;
+			pCodecCtx_a->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
 		if (avcodec_open2(pCodecCtx_a, pCodec_a, NULL) < 0)
 		{
@@ -250,7 +250,7 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 //input_frame -- 输入视频帧的信息
 //lTimeStamp -- 时间戳，时间单位为1/1000000
 //
-int CAVOutputStream::write_video_frame(AVStream * input_st, enum PixelFormat pix_fmt, AVFrame *pframe, INT64 lTimeStamp)
+int CAVOutputStream::write_video_frame(AVStream * input_st, enum AVPixelFormat pix_fmt, AVFrame *pframe, INT64 lTimeStamp)
 {
 	if(video_st == NULL)
 	   return -1;
@@ -269,13 +269,13 @@ int CAVOutputStream::write_video_frame(AVStream * input_st, enum PixelFormat pix
 	{
 		//camera data may has a pix fmt of RGB or sth else,convert it to YUV420
 		img_convert_ctx = sws_getContext(m_width, m_height,
-			pix_fmt, pCodecCtx->width, pCodecCtx->height, PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL);
+			pix_fmt, pCodecCtx->width, pCodecCtx->height, AV_PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL);
 	}
 
     sws_scale(img_convert_ctx, (const uint8_t* const*)pframe->data, pframe->linesize, 0, pCodecCtx->height, pFrameYUV->data, pFrameYUV->linesize);
     pFrameYUV->width = pframe->width;
     pFrameYUV->height = pframe->height;
-    pFrameYUV->format = PIX_FMT_YUV420P;
+    pFrameYUV->format = AV_PIX_FMT_YUV420P;
 
     enc_pkt.data = NULL;
     enc_pkt.size = 0;

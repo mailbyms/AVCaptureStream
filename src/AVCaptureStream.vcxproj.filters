@@ -110,7 +110,8 @@
     <None Include="res\NSPlayer.rc2">
       <Filter>资源</Filter>
     </None>
-    <None Include="READMe.md" />
+    <None Include="..\.gitignore" />
+    <None Include="..\READMe.md" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="res\NSPlayer.manifest" />

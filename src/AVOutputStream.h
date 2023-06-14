@@ -21,7 +21,7 @@ public:
 	bool  OpenOutputStream(const char* out_path);
 
 	//–¥»Î“ª÷°ÕºœÒ
-	int   write_video_frame(AVStream *st, enum PixelFormat pix_fmt, AVFrame *pframe, INT64 lTimeStamp);
+	int   write_video_frame(AVStream *st, enum AVPixelFormat pix_fmt, AVFrame *pframe, INT64 lTimeStamp);
 
 	//–¥»Î“ª÷°“Ù∆µ
 	int   write_audio_frame(AVStream *st, AVFrame *pframe, INT64 lTimeStamp);

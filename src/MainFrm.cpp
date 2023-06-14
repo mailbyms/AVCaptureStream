@@ -50,7 +50,7 @@ CMainFrame         *  gpMainFrame = NULL;
 //LRESULT CALLBACK OnDisplayVideo(int devNum,PBYTE pRgb, int dwSize); //图像RGB24数据回调
 
 //采集到的视频图像回调
-LRESULT CALLBACK VideoCaptureCallback(AVStream * input_st, enum PixelFormat pix_fmt, AVFrame *pframe, INT64 lTimeStamp);
+LRESULT CALLBACK VideoCaptureCallback(AVStream * input_st, enum AVPixelFormat pix_fmt, AVFrame *pframe, INT64 lTimeStamp);
 
 //采集到的音频数据回调
 LRESULT CALLBACK AudioCaptureCallback(AVStream * input_st, AVFrame *pframe, INT64 lTimeStamp);
@@ -550,7 +550,7 @@ void CMainFrame::CalculateFPS()
 
 
 //采集到的视频图像回调
-LRESULT CALLBACK VideoCaptureCallback(AVStream * input_st, enum PixelFormat pix_fmt, AVFrame *pframe, INT64 lTimeStamp)
+LRESULT CALLBACK VideoCaptureCallback(AVStream * input_st, enum AVPixelFormat pix_fmt, AVFrame *pframe, INT64 lTimeStamp)
 {
 	if(gpMainFrame->IsPreview())
 	{

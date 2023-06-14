@@ -60,8 +60,6 @@ typedef struct _decode_statis_
 
 //#include <afxsock.h>		// MFC socket extensions
 #include <Winsock2.h>
-#include "./include/stdint.h"
-
 #include <atltrace.h>
 
 //#include <streams.h>
@@ -76,18 +74,18 @@ extern "C" {
 #undef HAVE_AV_CONFIG_H
 #endif
 
-#include "./include/libavcodec/avcodec.h"
-#include "./include/libavutil/mathematics.h"
-#include "./include/libavutil/avutil.h"
-#include "./include/libswscale/swscale.h"
-#include "./include/libavutil/fifo.h"
-#include "./include/libavformat/avformat.h"
-#include "./include/libavutil/opt.h"
-#include "./include/libavutil/error.h"
-#include "./include/libswresample/swresample.h"
-#include "./include/libavutil/audio_fifo.h"
-#include "./include/libavutil/time.h"
-#include "./include/libavdevice/avdevice.h"
+#include "libavcodec/avcodec.h"
+#include "libavutil/mathematics.h"
+#include "libavutil/avutil.h"
+#include "libswscale/swscale.h"
+#include "libavutil/fifo.h"
+#include "libavformat/avformat.h"
+#include "libavutil/opt.h"
+#include "libavutil/error.h"
+#include "libswresample/swresample.h"
+#include "libavutil/audio_fifo.h"
+#include "libavutil/time.h"
+#include "libavdevice/avdevice.h"
 #ifdef __cplusplus
 }
 #endif
