@@ -555,7 +555,14 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 			//if ((pts_time > now_time) && ((aud_next_pts + pts_time - now_time)<vid_next_pts))
 			//	av_usleep(pts_time - now_time);
 
-			if ((ret = av_interleaved_write_frame(ofmt_ctx, &output_packet)) < 0) 
+			/*
+			av_interleaved_write_frame() 在写出数据之前必须将数据保存在内存中。交错是获取多个流(例如一个音频流，一个视频流)并以单调顺序序列化它们的过程。
+			所以，如果你写了一个音频帧，它会保存在内存中，直到你写一个“稍后”出现的视频帧。
+			一旦稍后的视频帧被写入，音频帧就可以被刷新'这样可以以不同的速度或在不同的线程中处理流，但输出仍然是单调的。
+			如果您只写一个流(一个 acc 流，没有视频)，那么按照建议使用 av_write_frame()。
+			*/
+			//if ((ret = av_interleaved_write_frame(ofmt_ctx, &output_packet)) < 0) 
+			if ((ret = av_write_frame(ofmt_ctx, &output_packet)) < 0)
 			{
 				char tmpErrString[128] = {0};
 				ATLTRACE("Could not write audio frame, error: %s\n", av_make_error_string(tmpErrString, AV_ERROR_MAX_STRING_SIZE, ret));

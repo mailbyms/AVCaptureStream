@@ -59,9 +59,6 @@
     <ClInclude Include="ChildView.h">
       <Filter>头</Filter>
     </ClInclude>
-    <ClInclude Include="include\EnumDevice.h">
-      <Filter>头</Filter>
-    </ClInclude>
     <ClInclude Include="ImagePainter.h">
       <Filter>头</Filter>
     </ClInclude>

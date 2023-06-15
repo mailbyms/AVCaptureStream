@@ -292,7 +292,6 @@
     <ClInclude Include="ChildView.h" />
     <ClInclude Include="DeviceEnumerator.h" />
     <ClInclude Include="ImagePainter.h" />
-    <ClInclude Include="include\EnumDevice.h" />
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="NSPlayer.h" />
     <ClInclude Include="PProfile.h" />
