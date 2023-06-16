@@ -1,13 +1,14 @@
 #pragma once
 
 #include "wxutil2.h"
+#include "ffcommon.h"
 
 #include <string>
 using namespace std;
 
 
-typedef LRESULT (CALLBACK* VideoCaptureCB)(AVStream * input_st, enum AVPixelFormat pix_fmt, AVFrame *pframe, INT64 lTimeStamp);
-typedef LRESULT (CALLBACK* AudioCaptureCB)(AVStream * input_st, AVFrame *pframe, INT64 lTimeStamp);
+typedef LRESULT (CALLBACK* VideoCaptureCB)(AVStream * input_st, enum AVPixelFormat pix_fmt, AVFrame *pframe, int64_t lTimeStamp);
+typedef LRESULT (CALLBACK* AudioCaptureCB)(AVStream * input_st, AVFrame *pframe, int64_t lTimeStamp);
 
 class CAVInputStream
 {

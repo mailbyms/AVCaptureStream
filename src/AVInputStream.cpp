@@ -4,8 +4,11 @@
 ** 邮箱：1795387053@qq.com
 **/
 
-#include "stdafx.h"
+#include "windows.h"
 #include "AVInputStream.h"
+#include "ffcommon.h"
+
+#define ATLTRACE printf
 
 static std::string AnsiToUTF8(const char *_ansi, int _ansi_len)
 {
@@ -113,7 +116,7 @@ bool  CAVInputStream::OpenInputStream()
 
 	//打开Directshow设备前需要调用FFmpeg的avdevice_register_all函数，否则下面返回失败
 	m_pInputFormat = av_find_input_format("dshow");
-	ASSERT(m_pInputFormat != NULL);
+	// TODO ASSERT(m_pInputFormat != NULL);
 
     // Set device params
     AVDictionary *device_param = 0;
@@ -253,7 +256,8 @@ void  CAVInputStream::CloseInputStream()
 	{  
 		if( WAIT_TIMEOUT == WaitForSingleObject(m_hCapVideoThread, 3000) )
 		{
-			OutputDebugString("WaitForSingleObject timeout.\n");
+			printf("WaitForSingleObject timeout.\n");
+			exit(-1);
 			//::TerminateThread(m_hCapVideoThread, 0);
 		}
 		CloseHandle(m_hCapVideoThread);
@@ -264,7 +268,8 @@ void  CAVInputStream::CloseInputStream()
 	{  
 		if( WAIT_TIMEOUT == WaitForSingleObject(m_hCapAudioThread, 3000) )
 		{
-			OutputDebugString("WaitForSingleObject timeout.\n");
+			printf("WaitForSingleObject timeout.\n");
+			exit(-1);
 			//::TerminateThread(m_hCapAudioThread, 0);
 		}
 		CloseHandle(m_hCapAudioThread);

@@ -1,116 +1,42 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="源">
-      <UniqueIdentifier>{be6d368f-5bb5-490b-a8e8-558d6c30039a}</UniqueIdentifier>
-      <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="头">
-      <UniqueIdentifier>{d90e8aaa-4f3c-45c3-b0d3-f15ccc511427}</UniqueIdentifier>
-      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="资源">
-      <UniqueIdentifier>{edc80b1a-ed89-4151-ad59-66973a64e58c}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx</Extensions>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AVCaptureStream.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
     <ClCompile Include="AVInputStream.cpp">
-      <Filter>源</Filter>
+      <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="AVOutputStream.cpp">
-      <Filter>源</Filter>
-    </ClCompile>
-    <ClCompile Include="ChildView.cpp">
-      <Filter>源</Filter>
-    </ClCompile>
-    <ClCompile Include="ImagePainter.cpp">
-      <Filter>源</Filter>
-    </ClCompile>
-    <ClCompile Include="MainFrm.cpp">
-      <Filter>源</Filter>
-    </ClCompile>
-    <ClCompile Include="NSPlayer.cpp">
-      <Filter>源</Filter>
-    </ClCompile>
-    <ClCompile Include="PProfile.cpp">
-      <Filter>源</Filter>
-    </ClCompile>
-    <ClCompile Include="SelectCaptureDeviceDlg.cpp">
-      <Filter>源</Filter>
-    </ClCompile>
-    <ClCompile Include="stdafx.cpp">
-      <Filter>源</Filter>
-    </ClCompile>
-    <ClCompile Include="VideoDisplayWnd.cpp">
-      <Filter>源</Filter>
-    </ClCompile>
-    <ClCompile Include="DeviceEnumerator.cpp">
-      <Filter>源</Filter>
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AVInputStream.h">
-      <Filter>头</Filter>
+      <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="AVOutputStream.h">
-      <Filter>头</Filter>
+      <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ChildView.h">
-      <Filter>头</Filter>
-    </ClInclude>
-    <ClInclude Include="ImagePainter.h">
-      <Filter>头</Filter>
-    </ClInclude>
-    <ClInclude Include="MainFrm.h">
-      <Filter>头</Filter>
-    </ClInclude>
-    <ClInclude Include="NSPlayer.h">
-      <Filter>头</Filter>
-    </ClInclude>
-    <ClInclude Include="PProfile.h">
-      <Filter>头</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource.h">
-      <Filter>头</Filter>
-    </ClInclude>
-    <ClInclude Include="SelectCaptureDeviceDlg.h">
-      <Filter>头</Filter>
-    </ClInclude>
-    <ClInclude Include="stdafx.h">
-      <Filter>头</Filter>
-    </ClInclude>
-    <ClInclude Include="targetver.h">
-      <Filter>头</Filter>
-    </ClInclude>
-    <ClInclude Include="VideoDisplayWnd.h">
-      <Filter>头</Filter>
+    <ClInclude Include="ffcommon.h">
+      <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="wxutil2.h">
-      <Filter>头</Filter>
+      <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="DeviceEnumerator.h">
-      <Filter>头</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="res\NSPlayer.ico">
-      <Filter>资源</Filter>
-    </Image>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="NSPlayer.rc">
-      <Filter>资源</Filter>
-    </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="res\NSPlayer.rc2">
-      <Filter>资源</Filter>
-    </None>
-    <None Include="..\.gitignore" />
-    <None Include="..\READMe.md" />
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="res\NSPlayer.manifest" />
   </ItemGroup>
 </Project>

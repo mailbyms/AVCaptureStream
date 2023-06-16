@@ -3,7 +3,7 @@
 ** 邮箱：1795387053@qq.com
 **/
 
-#include "stdafx.h"
+#include "ffcommon.h"
 #include "AVOutputStream.h"
 
 CAVOutputStream::CAVOutputStream(void)
@@ -90,7 +90,7 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 		pCodec = avcodec_find_encoder(m_video_codec_id);
 		if (!pCodec)
 		{
-			ATLTRACE("Can not find output video encoder! (没有找到合适的编码器！)\n");
+			printf("Can not find output video encoder! (没有找到合适的编码器！)\n");
 			return false;
 		}
 		pCodecCtx = avcodec_alloc_context3(pCodec);
@@ -117,8 +117,7 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 			pCodecCtx->qmin = 10;
 			pCodecCtx->qmax = 51;
 			//Optional Param
-			pCodecCtx->max_b_frames = 0;
-			
+			pCodecCtx->max_b_frames = 0;			
 
 #if 1
 			 //下面设置两个参数影响编码延时，如果不设置，编码器默认会缓冲很多帧
@@ -138,7 +137,7 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 
 		if (avcodec_open2(pCodecCtx, pCodec, &param) < 0)
 		{
-			ATLTRACE("Failed to open output video encoder! (编码器打开失败！)\n");
+			printf("Failed to open output video encoder! (编码器打开失败！)\n");
 			return false;
 		}
 
@@ -164,7 +163,7 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 		pCodec_a = avcodec_find_encoder(m_audio_codec_id);
 		if (!pCodec_a)
 		{
-			ATLTRACE("Can not find output audio encoder! (没有找到合适的编码器！)\n");
+			printf("Can not find output audio encoder! (没有找到合适的编码器！)\n");
 			return false;
 		}
 		pCodecCtx_a = avcodec_alloc_context3(pCodec_a);
@@ -188,7 +187,7 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 
 		if (avcodec_open2(pCodecCtx_a, pCodec_a, NULL) < 0)
 		{
-			ATLTRACE("Failed to open ouput audio encoder! (编码器打开失败！)\n");
+			printf("Failed to open ouput audio encoder! (编码器打开失败！)\n");
 			return false;
 		}
 
@@ -215,7 +214,7 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 		*/
 		if (!(m_converted_input_samples = (uint8_t**)calloc(pCodecCtx_a->channels, sizeof(**m_converted_input_samples)))) 
 		{
-			ATLTRACE("Could not allocate converted input sample pointers\n");
+			printf("Could not allocate converted input sample pointers\n");
 			return false;
 		}
 		m_converted_input_samples[0] = NULL;
@@ -224,7 +223,7 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 	//Open output URL,set before avformat_write_header() for muxing
 	if (avio_open(&ofmt_ctx->pb, out_path, AVIO_FLAG_READ_WRITE) < 0)
 	{
-		ATLTRACE("Failed to open output file! (输出文件打开失败！)\n");
+		printf("Failed to open output file! (输出文件打开失败！)\n");
 		return false;
 	}
 
@@ -232,7 +231,7 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 	av_dump_format(ofmt_ctx, 0, out_path, 1);
 
 	//Write File Header
-	avformat_write_header(ofmt_ctx, NULL);
+	int ret = avformat_write_header(ofmt_ctx, NULL);
 
 	m_vid_framecnt = 0;
 	m_aud_framecnt = 0;
@@ -250,16 +249,16 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 //input_frame -- 输入视频帧的信息
 //lTimeStamp -- 时间戳，时间单位为1/1000000
 //
-int CAVOutputStream::write_video_frame(AVStream * input_st, enum AVPixelFormat pix_fmt, AVFrame *pframe, INT64 lTimeStamp)
+int CAVOutputStream::write_video_frame(AVStream * input_st, enum AVPixelFormat pix_fmt, AVFrame *pframe, int64_t lTimeStamp)
 {
 	if(video_st == NULL)
 	   return -1;
 
-	//ATLTRACE("Video timestamp: %ld \n", lTimeStamp);
+	//printf("Video timestamp: %ld \n", lTimeStamp);
 
    if(m_first_vid_time1 == -1)
    {
-	   TRACE("First Video timestamp: %ld \n", lTimeStamp);
+	   printf("First Video timestamp: %lld \n", lTimeStamp);
 	   m_first_vid_time1 = lTimeStamp;
    }
 
@@ -312,7 +311,7 @@ int CAVOutputStream::write_video_frame(AVStream * input_st, enum AVPixelFormat p
 #else
 	
 		//enc_pkt.pts= av_rescale_q(lTimeStamp, time_base_q, video_st->time_base);
-		enc_pkt.pts = (INT64)video_st->time_base.den * lTimeStamp/AV_TIME_BASE;
+		enc_pkt.pts = (int64_t)video_st->time_base.den * lTimeStamp/AV_TIME_BASE;
 
 #endif
 
@@ -328,7 +327,7 @@ int CAVOutputStream::write_video_frame(AVStream * input_st, enum AVPixelFormat p
 		if(ret < 0)	
 		{
 			char tmpErrString[128] = {0};
-			ATLTRACE("Could not write video frame, error: %s\n", av_make_error_string(tmpErrString, AV_ERROR_MAX_STRING_SIZE, ret));
+			printf("Could not write video frame, error: %s\n", av_make_error_string(tmpErrString, AV_ERROR_MAX_STRING_SIZE, ret));
 			av_packet_unref(&enc_pkt);
 			return ret;
 		}
@@ -337,7 +336,7 @@ int CAVOutputStream::write_video_frame(AVStream * input_st, enum AVPixelFormat p
 	}
 	else if(ret == 0)
 	{
-		ATLTRACE("Buffer video frame, timestamp: %I64d.\n", lTimeStamp); //编码器缓冲帧
+		printf("Buffer video frame, timestamp: %I64d.\n", lTimeStamp); //编码器缓冲帧
 	}
 
 	return 0;
@@ -347,14 +346,14 @@ int CAVOutputStream::write_video_frame(AVStream * input_st, enum AVPixelFormat p
 //input_frame -- 输入音频帧的信息
 //lTimeStamp -- 时间戳，时间单位为1/1000000
 //
-int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame, INT64 lTimeStamp)
+int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame, int64_t lTimeStamp)
 {
 	if(audio_st == NULL)
 		return -1;
 
 	if(m_first_aud_time == -1)
 	{
-		TRACE("First Audio timestamp: %ld \n", lTimeStamp);
+		printf("First Audio timestamp: %lld \n", lTimeStamp);
 		m_first_aud_time = lTimeStamp;
 	}
 
@@ -363,17 +362,17 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 	AVRational time_base_q = { 1, AV_TIME_BASE };
 	int ret;
 
-	//if((INT64)(av_audio_fifo_size(m_fifo) + input_frame->nb_samples) * AV_TIME_BASE /(INT64)(input_st->codec->sample_rate) - lTimeStamp > AV_TIME_BASE/10)
+	//if((int64_t)(av_audio_fifo_size(m_fifo) + input_frame->nb_samples) * AV_TIME_BASE /(int64_t)(input_st->codec->sample_rate) - lTimeStamp > AV_TIME_BASE/10)
 	//{
 	//	TRACE("audio data is overflow \n");
 	//	return 0;
 	//}
 
 	int nFifoSamples = av_audio_fifo_size(m_fifo);
-	INT64 timeshift = (INT64)nFifoSamples * AV_TIME_BASE /(INT64)(input_st->codec->sample_rate); //因为Fifo里有之前未读完的数据，所以从Fifo队列里面取出的第一个音频包的时间戳等于当前时间减掉缓冲部分的时长
+	int64_t timeshift = (int64_t)nFifoSamples * AV_TIME_BASE /(int64_t)(input_st->codec->sample_rate); //因为Fifo里有之前未读完的数据，所以从Fifo队列里面取出的第一个音频包的时间戳等于当前时间减掉缓冲部分的时长
 
 
-	TRACE("audio time diff: %I64d \n", lTimeStamp - timeshift - m_nLastAudioPresentationTime); //理论上该差值稳定在一个水平，如果差值一直变大（在某些采集设备上发现有此现象），则会有视音频不同步的问题，具体产生的原因不清楚
+	printf("audio time diff: %I64d \n", lTimeStamp - timeshift - m_nLastAudioPresentationTime); //理论上该差值稳定在一个水平，如果差值一直变大（在某些采集设备上发现有此现象），则会有视音频不同步的问题，具体产生的原因不清楚
     m_aud_framecnt += input_frame->nb_samples;
 
 
@@ -394,7 +393,7 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 		* not greater than the number of samples to be converted.
 		* If the sample rates differ, this case has to be handled differently
 		*/
-		ATLASSERT(pCodecCtx_a->sample_rate == input_st->codec->sample_rate);
+		// TODO ATLASSERT(pCodecCtx_a->sample_rate == input_st->codec->sample_rate);
 
 		swr_init(aud_convert_ctx);
 	}
@@ -406,7 +405,7 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 
 	if ((ret = av_samples_alloc(m_converted_input_samples, NULL, pCodecCtx_a->channels, input_frame->nb_samples, pCodecCtx_a->sample_fmt, 0)) < 0)
 	{
-		ATLTRACE("Could not allocate converted input samples\n");
+		printf("Could not allocate converted input samples\n");
 		av_freep(&(*m_converted_input_samples)[0]);
 		free(*m_converted_input_samples);
 		return ret;
@@ -422,7 +421,7 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 		m_converted_input_samples, input_frame->nb_samples,
 		(const uint8_t**)input_frame->extended_data, input_frame->nb_samples)) < 0)
 	{
-		ATLTRACE("Could not convert input samples\n");
+		printf("Could not convert input samples\n");
 		return ret;
 	}
 
@@ -433,19 +432,19 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 	*/
 	if ((ret = av_audio_fifo_realloc(m_fifo, av_audio_fifo_size(m_fifo) + input_frame->nb_samples)) < 0)
 	{
-		ATLTRACE("Could not reallocate FIFO\n");
+		printf("Could not reallocate FIFO\n");
 		return ret;
 	}
 
 	/** Store the new samples in the FIFO buffer. */
 	if (av_audio_fifo_write(m_fifo, (void **)m_converted_input_samples, input_frame->nb_samples) < input_frame->nb_samples) 
 	{
-		ATLTRACE("Could not write data to FIFO\n");
+		printf("Could not write data to FIFO\n");
 		return AVERROR_EXIT;
 	}
 
 
-	INT64 timeinc = (INT64)pCodecCtx_a->frame_size * AV_TIME_BASE /(INT64)(input_st->codec->sample_rate);
+	int64_t timeinc = (int64_t)pCodecCtx_a->frame_size * AV_TIME_BASE /(int64_t)(input_st->codec->sample_rate);
     
     //当前帧的时间戳不能小于上一帧的值 
 	if(lTimeStamp - timeshift > m_nLastAudioPresentationTime )
@@ -493,7 +492,7 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 		*/
 		if ((ret = av_frame_get_buffer(output_frame, 0)) < 0) 
 		{
-			ATLTRACE("Could not allocate output frame samples\n");
+			printf("Could not allocate output frame samples\n");
 			av_frame_free(&output_frame);
 			return ret;
 		}
@@ -504,7 +503,7 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 		*/
 		if (av_audio_fifo_read(m_fifo, (void **)output_frame->data, frame_size) < frame_size) 
 		{
-			ATLTRACE("Could not read data from FIFO\n");
+			printf("Could not read data from FIFO\n");
 			return AVERROR_EXIT;
 		}
 
@@ -523,7 +522,7 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 		*/
 		if ((ret = avcodec_encode_audio2(pCodecCtx_a, &output_packet, output_frame, &enc_got_frame_a)) < 0) 
 		{
-			ATLTRACE("Could not encode frame\n");
+			printf("Could not encode frame\n");
 			av_packet_unref(&output_packet);
 			return ret;
 		}
@@ -548,12 +547,14 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 
 #endif
 
-			//ATLTRACE("audio pts : %ld\n", output_packet.pts);
+			//printf("audio pts : %ld\n", output_packet.pts);
 
 			//int64_t pts_time = av_rescale_q(output_packet.pts, time_base, time_base_q);
 			//int64_t now_time = av_gettime() - start_time;
 			//if ((pts_time > now_time) && ((aud_next_pts + pts_time - now_time)<vid_next_pts))
 			//	av_usleep(pts_time - now_time);
+
+			printf("write frame, package size:%d\n", output_packet.size);
 
 			/*
 			av_interleaved_write_frame() 在写出数据之前必须将数据保存在内存中。交错是获取多个流(例如一个音频流，一个视频流)并以单调顺序序列化它们的过程。
@@ -565,7 +566,7 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 			if ((ret = av_write_frame(ofmt_ctx, &output_packet)) < 0)
 			{
 				char tmpErrString[128] = {0};
-				ATLTRACE("Could not write audio frame, error: %s\n", av_make_error_string(tmpErrString, AV_ERROR_MAX_STRING_SIZE, ret));
+				printf("Could not write audio frame, error: %s\n", av_make_error_string(tmpErrString, AV_ERROR_MAX_STRING_SIZE, ret));
 				av_packet_unref(&output_packet);
 				return ret;
 			}

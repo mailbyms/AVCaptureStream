@@ -21,10 +21,10 @@ public:
 	bool  OpenOutputStream(const char* out_path);
 
 	//写入一帧图像
-	int   write_video_frame(AVStream *st, enum AVPixelFormat pix_fmt, AVFrame *pframe, INT64 lTimeStamp);
+	int   write_video_frame(AVStream *st, enum AVPixelFormat pix_fmt, AVFrame *pframe, int64_t lTimeStamp);
 
 	//写入一帧音频
-	int   write_audio_frame(AVStream *st, AVFrame *pframe, INT64 lTimeStamp);
+	int   write_audio_frame(AVStream *st, AVFrame *pframe, int64_t lTimeStamp);
 
 	//关闭输出
 	void  CloseOutput();

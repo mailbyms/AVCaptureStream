@@ -1,31 +1,31 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.33529.398
+VisualStudioVersion = 15.0.28307.1800
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AVCaptureStream", "AVCaptureStream.vcxproj", "{84A69C08-32F5-43A9-8488-40DF4A406CF8}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AVCaptureStream", "AVCaptureStream.vcxproj", "{CBCC3CE2-172D-45EC-ABBF-AF47393F3479}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Win32 = Debug|Win32
 		Debug|x64 = Debug|x64
-		Release|Win32 = Release|Win32
+		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{84A69C08-32F5-43A9-8488-40DF4A406CF8}.Debug|Win32.ActiveCfg = Debug|Win32
-		{84A69C08-32F5-43A9-8488-40DF4A406CF8}.Debug|Win32.Build.0 = Debug|Win32
-		{84A69C08-32F5-43A9-8488-40DF4A406CF8}.Debug|x64.ActiveCfg = Debug|x64
-		{84A69C08-32F5-43A9-8488-40DF4A406CF8}.Debug|x64.Build.0 = Debug|x64
-		{84A69C08-32F5-43A9-8488-40DF4A406CF8}.Release|Win32.ActiveCfg = Release|Win32
-		{84A69C08-32F5-43A9-8488-40DF4A406CF8}.Release|Win32.Build.0 = Release|Win32
-		{84A69C08-32F5-43A9-8488-40DF4A406CF8}.Release|x64.ActiveCfg = Release|x64
-		{84A69C08-32F5-43A9-8488-40DF4A406CF8}.Release|x64.Build.0 = Release|x64
+		{CBCC3CE2-172D-45EC-ABBF-AF47393F3479}.Debug|x64.ActiveCfg = Debug|x64
+		{CBCC3CE2-172D-45EC-ABBF-AF47393F3479}.Debug|x64.Build.0 = Debug|x64
+		{CBCC3CE2-172D-45EC-ABBF-AF47393F3479}.Debug|x86.ActiveCfg = Debug|Win32
+		{CBCC3CE2-172D-45EC-ABBF-AF47393F3479}.Debug|x86.Build.0 = Debug|Win32
+		{CBCC3CE2-172D-45EC-ABBF-AF47393F3479}.Release|x64.ActiveCfg = Release|x64
+		{CBCC3CE2-172D-45EC-ABBF-AF47393F3479}.Release|x64.Build.0 = Release|x64
+		{CBCC3CE2-172D-45EC-ABBF-AF47393F3479}.Release|x86.ActiveCfg = Release|Win32
+		{CBCC3CE2-172D-45EC-ABBF-AF47393F3479}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {E30810CE-1DD0-471E-85C4-44E3908ADC88}
+		SolutionGuid = {98CCC872-F65C-4B29-94A3-42B05E8B7A57}
 	EndGlobalSection
 EndGlobal
