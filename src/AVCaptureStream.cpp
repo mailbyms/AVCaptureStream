@@ -77,7 +77,7 @@ LRESULT  OnStartStream(WPARAM wParam, LPARAM lParam)
 
 	//从Config.INI文件中读取录制文件路径
 	// P_GetProfileString(_T("Client"), "file_path", m_szFilePath, sizeof(m_szFilePath));
-	strcpy(m_szFilePath, "capture.mkv");
+	strcpy(m_szFilePath, "rtp://127.0.0.1:49990");
 
 	bRet = m_OutputStream.OpenOutputStream(m_szFilePath); //设置输出路径
 	if (!bRet)
@@ -97,8 +97,8 @@ int main(int argc, char *argv[]) {
 	avformat_network_init();
 	avdevice_register_all();
 
-	m_InputStream.SetVideoCaptureDevice("Integrated Camera");
-	m_InputStream.SetAudioCaptureDevice("Microphone Array (AMD Audio Device)");
+	//m_InputStream.SetVideoCaptureDevice("Logi C270 HD WebCam");
+	m_InputStream.SetAudioCaptureDevice("麦克风 (Logi C270 HD WebCam)");
 	OnStartStream(0, 0);
 
 	while (true)

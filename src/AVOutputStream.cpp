@@ -82,8 +82,9 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 	m_output_path = out_path;
 
 	//output initialize
-	avformat_alloc_output_context2(&ofmt_ctx, NULL, NULL, out_path);
-
+	AVOutputFormat*  format = av_guess_format("rtp", NULL, NULL);
+	avformat_alloc_output_context2(&ofmt_ctx, format, format->name, out_path);
+	   
 	if(m_video_codec_id != 0)
 	{
 		//output video encoder initialize
@@ -221,7 +222,8 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 	}
 
 	//Open output URL,set before avformat_write_header() for muxing
-	if (avio_open(&ofmt_ctx->pb, out_path, AVIO_FLAG_READ_WRITE) < 0)
+	if (avio_open(&ofmt_ctx->pb, ofmt_ctx->filename, AVIO_FLAG_WRITE) < 0)
+//	if (avio_open(&ofmt_ctx->pb, out_path, AVIO_FLAG_READ_WRITE) < 0)
 	{
 		printf("Failed to open output file! (输出文件打开失败！)\n");
 		return false;
@@ -241,6 +243,15 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 	m_next_aud_time = 0;
     m_first_vid_time1 = m_first_vid_time2 = -1;
 	m_first_aud_time = -1;
+
+	/* Write a file for VLC */
+	char buf[200000];
+	AVFormatContext *ac[] = { ofmt_ctx };
+	av_sdp_create(ac, 1, buf, 20000);
+	printf("sdp:\n%s\n", buf);
+	FILE* fsdp = fopen("test.sdp", "w");
+	fprintf(fsdp, "%s", buf);
+	fclose(fsdp);
 
 	return true;
 }
