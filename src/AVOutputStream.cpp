@@ -10,7 +10,6 @@ CAVOutputStream::CAVOutputStream(void)
 {
 	m_video_codec_id = AV_CODEC_ID_NONE;
 	m_audio_codec_id = AV_CODEC_ID_NONE;
-    m_out_buffer = NULL;
 	m_width = 320;
 	m_height = 240;
 	m_framerate = 25;
@@ -44,9 +43,6 @@ CAVOutputStream::CAVOutputStream(void)
 	m_next_aud_time = 0;
 
 	m_nLastAudioPresentationTime = 0;
-
-	avcodec_register_all();
-    av_register_all();
 }
 
 CAVOutputStream::~CAVOutputStream(void)
@@ -79,6 +75,7 @@ void CAVOutputStream::SetAudioCodecProp(AVCodecID codec_id, int samplerate, int 
 //创建编码器和混合器
 bool CAVOutputStream::OpenOutputStream(const char* out_path)
 {
+	int ret = 0;
 	m_output_path = out_path;
 
 	//output initialize
@@ -150,12 +147,18 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 		}
 		video_st->time_base.num = 1;
 		video_st->time_base.den = m_framerate;
-		video_st->codec = pCodecCtx;
+
+		/* copy the stream parameters to the muxer */
+		ret = avcodec_parameters_from_context(video_st->codecpar, pCodecCtx);
+		if (ret < 0) {
+			fprintf(stderr, "Could not copy the stream parameters\n");
+			exit(1);
+		}
 
 		//Initialize the buffer to store YUV frames to be encoded.
 		pFrameYUV = av_frame_alloc();
-		m_out_buffer = (uint8_t *)av_malloc(avpicture_get_size(AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height));
-		avpicture_fill((AVPicture *)pFrameYUV, m_out_buffer, AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height);
+
+		av_image_alloc(pFrameYUV->data, pFrameYUV->linesize, pCodecCtx->width, pCodecCtx->height, AV_PIX_FMT_YUV420P, 1);	// TODO 需要释放
 	}
 
 	if(m_audio_codec_id != 0)
@@ -200,7 +203,13 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 		}
 		audio_st->time_base.num = 1;
 		audio_st->time_base.den = pCodecCtx_a->sample_rate;
-		audio_st->codec = pCodecCtx_a;
+
+		/* copy the stream parameters to the muxer */
+		ret = avcodec_parameters_from_context(audio_st->codecpar, pCodecCtx_a);
+		if (ret < 0) {
+			fprintf(stderr, "Could not copy the stream parameters\n");
+			exit(1);
+		}
 
 		//Initialize the FIFO buffer to store audio samples to be encoded. 
 
@@ -222,8 +231,7 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 	}
 
 	//Open output URL,set before avformat_write_header() for muxing
-	if (avio_open(&ofmt_ctx->pb, ofmt_ctx->filename, AVIO_FLAG_WRITE) < 0)
-//	if (avio_open(&ofmt_ctx->pb, out_path, AVIO_FLAG_READ_WRITE) < 0)
+	if (avio_open(&ofmt_ctx->pb, ofmt_ctx->url, AVIO_FLAG_WRITE) < 0)
 	{
 		printf("Failed to open output file! (输出文件打开失败！)\n");
 		return false;
@@ -233,7 +241,7 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 	av_dump_format(ofmt_ctx, 0, out_path, 1);
 
 	//Write File Header
-	int ret = avformat_write_header(ofmt_ctx, NULL);
+	ret = avformat_write_header(ofmt_ctx, NULL);
 
 	m_vid_framecnt = 0;
 	m_aud_framecnt = 0;
@@ -262,6 +270,8 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 //
 int CAVOutputStream::write_video_frame(AVStream * input_st, enum AVPixelFormat pix_fmt, AVFrame *pframe, int64_t lTimeStamp)
 {
+	int ret = 0;
+
 	if(video_st == NULL)
 	   return -1;
 
@@ -287,70 +297,46 @@ int CAVOutputStream::write_video_frame(AVStream * input_st, enum AVPixelFormat p
     pFrameYUV->height = pframe->height;
     pFrameYUV->format = AV_PIX_FMT_YUV420P;
 
-    enc_pkt.data = NULL;
-    enc_pkt.size = 0;
-    av_init_packet(&enc_pkt);
+	// 编码并输出
 
-	int ret;
-	int enc_got_frame = 0;
-    ret = avcodec_encode_video2(pCodecCtx, &enc_pkt, pFrameYUV, &enc_got_frame);
-
-    if (enc_got_frame == 1)
-	{
-        //printf("Succeed to encode frame: %5d\tsize:%5d\n", framecnt, enc_pkt.size);
-       
-		if(m_first_vid_time2 == -1)
-		{
-			m_first_vid_time2 = lTimeStamp;
-		}
-
-        enc_pkt.stream_index = video_st->index;						
-
-#if 0
-        //Write PTS
-		AVRational time_base = video_st->time_base;//{ 1, 1000 };
-        AVRational r_framerate1 = input_st->r_frame_rate;//{ 50, 2 }; 
-        //Duration between 2 frames (us)
-       // int64_t calc_duration = (double)(AV_TIME_BASE)*(1 / av_q2d(r_framerate1));	//内部时间戳
-		int64_t calc_pts = (double)m_vid_framecnt * (AV_TIME_BASE)*(1 / av_q2d(r_framerate1));
-
-        //Parameters
-        enc_pkt.pts = av_rescale_q(calc_pts, time_base_q, time_base);  //enc_pkt.pts = (double)(framecnt*calc_duration)*(double)(av_q2d(time_base_q)) / (double)(av_q2d(time_base));
-        enc_pkt.dts = enc_pkt.pts;
-        //enc_pkt.duration = av_rescale_q(calc_duration, time_base_q, time_base); //(double)(calc_duration)*(double)(av_q2d(time_base_q)) / (double)(av_q2d(time_base));
-        //enc_pkt.pos = -1;
-#else
-	
-		//enc_pkt.pts= av_rescale_q(lTimeStamp, time_base_q, video_st->time_base);
-		enc_pkt.pts = (int64_t)video_st->time_base.den * lTimeStamp/AV_TIME_BASE;
-
-#endif
-
-        m_vid_framecnt++;
-
-        ////Delay
-		//int64_t pts_time = av_rescale_q(enc_pkt.pts, time_base, time_base_q);
-		//int64_t now_time = av_gettime() - start_time;						
-		//if ((pts_time > now_time) && ((vid_next_pts + pts_time - now_time)<aud_next_pts))
-		//	av_usleep(pts_time - now_time);
-		
-		printf("write video frame, package size:%d\n", enc_pkt.size);
-
-        ret = av_interleaved_write_frame(ofmt_ctx, &enc_pkt);
-		if(ret < 0)	
-		{
-			char tmpErrString[128] = {0};
-			printf("Could not write video frame, error: %s\n", av_make_error_string(tmpErrString, AV_ERROR_MAX_STRING_SIZE, ret));
-			av_packet_unref(&enc_pkt);
-			return ret;
-		}
-
-        av_free_packet(&enc_pkt);
+	// send the frame to the encoder
+	ret = avcodec_send_frame(pCodecCtx, pFrameYUV);
+	if (ret < 0) {
+		fprintf(stderr, "Error sending a frame to the encoder: %s\n",
+			av_err2str(ret));
+		exit(1);
 	}
-	else if(ret == 0)
-	{
-		printf("Buffer video frame, timestamp: %I64d.\n", lTimeStamp); //编码器缓冲帧
+
+	while (ret >= 0) {
+		AVPacket pkt = { 0 };
+
+		ret = avcodec_receive_packet(pCodecCtx, &pkt);
+		if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+			break;
+		else if (ret < 0) {
+			fprintf(stderr, "Error encoding a frame: %s\n", av_err2str(ret));
+			exit(1);
+		}
+			
+
+		m_vid_framecnt++;
+
+		printf("write video frame, package size:%d\n", pkt.size);			   		 	  
+
+		/* rescale output packet timestamp values from codec to stream timebase */
+		av_packet_rescale_ts(&pkt, pCodecCtx->time_base, video_st->time_base);
+		pkt.stream_index = video_st->index;
+
+		/* Write the compressed frame to the media file. */
+		//log_packet(fmt_ctx, &pkt);
+		ret = av_interleaved_write_frame(ofmt_ctx, &pkt);
+		av_packet_unref(&pkt);
+		if (ret < 0) {
+			fprintf(stderr, "Error while writing output packet: %s\n", av_err2str(ret));
+			exit(1);
+		}
 	}
+
 
 	return 0;
 }
@@ -382,7 +368,7 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 	//}
 
 	int nFifoSamples = av_audio_fifo_size(m_fifo);
-	int64_t timeshift = (int64_t)nFifoSamples * AV_TIME_BASE /(int64_t)(input_st->codec->sample_rate); //因为Fifo里有之前未读完的数据，所以从Fifo队列里面取出的第一个音频包的时间戳等于当前时间减掉缓冲部分的时长
+	int64_t timeshift = (int64_t)nFifoSamples * AV_TIME_BASE /(int64_t)(input_st->codecpar->sample_rate); //因为Fifo里有之前未读完的数据，所以从Fifo队列里面取出的第一个音频包的时间戳等于当前时间减掉缓冲部分的时长
 
 
 	printf("audio time diff: %I64d \n", lTimeStamp - timeshift - m_nLastAudioPresentationTime); //理论上该差值稳定在一个水平，如果差值一直变大（在某些采集设备上发现有此现象），则会有视音频不同步的问题，具体产生的原因不清楚
@@ -396,9 +382,9 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 			av_get_default_channel_layout(pCodecCtx_a->channels),
 			pCodecCtx_a->sample_fmt,
 			pCodecCtx_a->sample_rate,
-			av_get_default_channel_layout(input_st->codec->channels),
-			input_st->codec->sample_fmt,
-			input_st->codec->sample_rate,
+			av_get_default_channel_layout(input_st->codecpar->channels),
+			(AVSampleFormat)input_st->codecpar->format,
+			input_st->codecpar->sample_rate,
 			0, NULL);
 
 		/**
@@ -457,7 +443,7 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 	}
 
 
-	int64_t timeinc = (int64_t)pCodecCtx_a->frame_size * AV_TIME_BASE /(int64_t)(input_st->codec->sample_rate);
+	int64_t timeinc = (int64_t)pCodecCtx_a->frame_size * AV_TIME_BASE /(int64_t)(input_st->codecpar->sample_rate);
     
     //当前帧的时间戳不能小于上一帧的值 
 	if(lTimeStamp - timeshift > m_nLastAudioPresentationTime )
@@ -615,10 +601,10 @@ void  CAVOutputStream::CloseOutput()
     if (audio_st)
         avcodec_close(audio_st->codec);
 
-    if(m_out_buffer)
+	// TODO 对应 OpenOutputStream 里的 av_image_alloc 
+    if(pFrameYUV && pFrameYUV->data)
 	{
-		av_free(m_out_buffer);
-		m_out_buffer = NULL;
+		av_free(pFrameYUV->data);
 	}
 
 	if (m_converted_input_samples) 

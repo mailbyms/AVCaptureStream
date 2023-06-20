@@ -21,6 +21,7 @@ extern "C" {
 #include "libswresample/swresample.h"
 #include "libavutil/audio_fifo.h"
 #include "libavutil/time.h"
+#include <libavutil/imgutils.h>
 #include "libavdevice/avdevice.h"
 #ifdef __cplusplus
 }

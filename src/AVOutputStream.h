@@ -42,7 +42,6 @@ protected:
     AVCodecContext* pCodecCtx_a;
     AVCodec* pCodec;
     AVCodec* pCodec_a;
-    AVPacket enc_pkt;
     AVPacket enc_pkt_a;
     AVFrame *pFrameYUV;
     struct SwsContext *img_convert_ctx;
@@ -64,7 +63,6 @@ protected:
 	int64_t  m_nLastAudioPresentationTime; //记录上一帧的音频时间戳
 
 	uint8_t ** m_converted_input_samples;
-	uint8_t * m_out_buffer;
 
 public:
 	string     m_output_path; //输出路径

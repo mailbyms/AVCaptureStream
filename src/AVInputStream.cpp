@@ -110,7 +110,6 @@ bool  CAVInputStream::OpenInputStream()
 	}
 
 
-	int i;
 	enum AVMediaType type;
 
 	//打开Directshow设备前需要调用FFmpeg的avdevice_register_all函数，否则下面返回失败
@@ -398,7 +397,7 @@ int CAVInputStream::decode_packet(AVCodecContext *dec, const AVPacket *pkt)
 			{
 				CAutoLock lock(&m_WriteLock);
 
-				m_pVideoCBFunc(m_pVidFmtCtx->streams[m_videoindex], m_pVidFmtCtx->streams[m_videoindex]->codec->pix_fmt, frame, av_gettime() - m_start_time);
+				m_pVideoCBFunc(m_pVidFmtCtx->streams[m_videoindex], (AVPixelFormat)m_pVidFmtCtx->streams[m_videoindex]->codecpar->format, frame, av_gettime() - m_start_time);
 			}
 
 			av_frame_free(&frame);
@@ -536,22 +535,17 @@ bool CAVInputStream::GetVideoInputInfo(int & width, int & height, int & frame_ra
 {
 	if(m_videoindex != -1)
 	{
-		width  =  m_pVidFmtCtx->streams[m_videoindex]->codec->width;
-		height =  m_pVidFmtCtx->streams[m_videoindex]->codec->height;
-		
 		AVStream *stream = m_pVidFmtCtx->streams[m_videoindex];  
+		width = stream->codecpar->width;
+		height = stream->codecpar->height;
   
-		pixFmt = stream->codec->pix_fmt;
+		pixFmt = (AVPixelFormat)stream->codecpar->format;
 
         //frame_rate = stream->avg_frame_rate.num/stream->avg_frame_rate.den;//每秒多少帧
 
 		if(stream->r_frame_rate.den > 0)
 		{
 		  frame_rate = stream->r_frame_rate.num/stream->r_frame_rate.den;
-		}
-		else if(stream->codec->framerate.den > 0)
-		{
-		  frame_rate = stream->codec->framerate.num/stream->codec->framerate.den;
 		}
 
 		return true;
@@ -563,9 +557,10 @@ bool  CAVInputStream::GetAudioInputInfo(AVSampleFormat & sample_fmt, int & sampl
 {
 	if(m_audioindex != -1)
 	{
-		sample_fmt = m_pAudFmtCtx->streams[m_audioindex]->codec->sample_fmt;
-		sample_rate = m_pAudFmtCtx->streams[m_audioindex]->codec->sample_rate;
-		channels = m_pAudFmtCtx->streams[m_audioindex]->codec->channels;
+		AVStream *stream = m_pVidFmtCtx->streams[m_audioindex];
+		sample_fmt = (AVSampleFormat)stream->codecpar->format;
+		sample_rate = stream->codecpar->sample_rate;
+		channels = stream->codecpar->channels;
 
 		return true;
 	}
