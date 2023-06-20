@@ -1,24 +1,24 @@
-## Ò»¡¢ÏîÄ¿À´Ô´
-- Ô­Ê¼ÏîÄ¿´úÂëÀ´×Ô csdn ÏÂÔØ£ºhttps://blog.csdn.net/zhoubotong2012/article/details/79338093    
-- ÐÞ¸ÄÏî£º
-  - È¥µôÏîÄ¿Àïµ÷ÓÃ EnumDevice.dll ÁÐ¾ÙÏµÍ³µÄÉè±¸µÄÂß¼­£¬¸ÄÓÃ github ÁíÒ»¸ö¿ªÔ´µÄÀà£ºhttps://github.com/mailbyms/OpenCVDeviceEnumerator
-  - MainFrm.cpp Àï´ÓÅäÖÃÎÄ¼þ¶ÁÈ¡Êä³öÎÄ¼þÃû£¬¸ÄÎª¹Ì¶¨Öµ capture.mkv
+## ä¸€ã€é¡¹ç›®æ¥æº
+- åŽŸå§‹é¡¹ç›®ä»£ç æ¥è‡ª csdn ä¸‹è½½ï¼šhttps://blog.csdn.net/zhoubotong2012/article/details/79338093    
+- ä¿®æ”¹é¡¹ï¼š
+  - åŽ»æŽ‰é¡¹ç›®é‡Œè°ƒç”¨ EnumDevice.dll åˆ—ä¸¾ç³»ç»Ÿçš„è®¾å¤‡çš„é€»è¾‘ï¼Œæ”¹ç”¨ github å¦ä¸€ä¸ªå¼€æºçš„ç±»ï¼šhttps://github.com/mailbyms/OpenCVDeviceEnumerator
+  - MainFrm.cpp é‡Œä»Žé…ç½®æ–‡ä»¶è¯»å–è¾“å‡ºæ–‡ä»¶åï¼Œæ”¹ä¸ºå›ºå®šå€¼ capture.mkv
 
 
-## ¶þ¡¢ÏîÄ¿½¨Á¢
-Visual Studio 2017£¬ Windows 10£¬Thinkpad X13 ×Ô´øÉãÏñÍ·/»°Í²£¬Ì¨Ê½»ú+ÂÞ¼¼c270 USB ÉãÏñÍ·£¬ Õý³£ÔËÐÐ
-- ÏîÄ¿Ô­À´×Ô´øµÄ ffmpeg ¿âÊÇ 32 Î»µÄ£¬°æ±¾Îª December 5, 2014, FFmpeg 2.5 https://ffmpeg.org/index.html#news ¡£ÏÖ¸ÄÎª 64 Î» FFmpeg 4.3.2£¬±àÒë»áÓÐº¯Êý¹ý¾ÉµÄ¾¯¸æ£¬¿ÉºöÂÔ
-- ÏÂÔØ FFMPEG 64Î» SDK (https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-4.3.2-full_build-shared.7z)£¬²¢½âÑ¹µ½ C ÅÌ¸ùÄ¿Â¼ÏÂ
+## äºŒã€é¡¹ç›®å»ºç«‹
+Visual Studio 2017ï¼Œ Windows 10ï¼ŒThinkpad X13 è‡ªå¸¦æ‘„åƒå¤´/è¯ç­’ï¼Œå°å¼æœº+ç½—æŠ€c270 USB æ‘„åƒå¤´ï¼Œ æ­£å¸¸è¿è¡Œ
+- é¡¹ç›®åŽŸæ¥è‡ªå¸¦çš„ ffmpeg åº“æ˜¯ 32 ä½çš„ï¼Œç‰ˆæœ¬ä¸º December 5, 2014, FFmpeg 2.5 https://ffmpeg.org/index.html#news ã€‚çŽ°æ”¹ä¸º 64 ä½ FFmpeg 4.3.2ï¼Œç¼–è¯‘ä¼šæœ‰å‡½æ•°è¿‡æ—§çš„è­¦å‘Šï¼Œå¯å¿½ç•¥ã€‚ï¼ˆRTPåˆ†æ”¯å·²æ›´æ¢è¿‡æ—¶çš„APIè°ƒç”¨ï¼‰
+- ä¸‹è½½ FFMPEG 64ä½ SDK (https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-4.3.2-full_build-shared.7z)ï¼Œå¹¶è§£åŽ‹åˆ° C ç›˜æ ¹ç›®å½•ä¸‹
 
-- IDE Ìí¼Ó FFMPEG SDK:
+- IDE æ·»åŠ  FFMPEG SDK:
 	
-	- ÏîÄ¿ÊôÐÔ£¬ÇÐ»»µ½ Debug - x64
+	- é¡¹ç›®å±žæ€§ï¼Œåˆ‡æ¢åˆ° Debug - x64
 	  ```
 	  C/C++
-	      ³£¹æ->¸½¼ÓÄ¿Â¼£ºÔö¼Ó ffmpeg µÄ include Ä¿Â¼£¬ÀýÈç"C:\ffmpeg-4.3.2\include"
-	  Á´½ÓÆ÷
-	      ³£¹æ->¸½¼Ó¿âÄ¿Â¼£ºÔö¼Ó ffmpeg µÄ lib Ä¿Â¼£¬ÀýÈç"C:\ffmpeg-4.3.2\lib"
-	  µ÷ÊÔ
-	      »·¾³£ºPATH=%PATH%;C:\ffmpeg-4.3.2\bin
+	      å¸¸è§„->é™„åŠ ç›®å½•ï¼šå¢žåŠ  ffmpeg çš„ include ç›®å½•ï¼Œä¾‹å¦‚"C:\ffmpeg-4.3.2\include"
+	  é“¾æŽ¥å™¨
+	      å¸¸è§„->é™„åŠ åº“ç›®å½•ï¼šå¢žåŠ  ffmpeg çš„ lib ç›®å½•ï¼Œä¾‹å¦‚"C:\ffmpeg-4.3.2\lib"
+	  è°ƒè¯•
+	      çŽ¯å¢ƒï¼šPATH=%PATH%;C:\ffmpeg-4.3.2\bin
 	  ```
 
