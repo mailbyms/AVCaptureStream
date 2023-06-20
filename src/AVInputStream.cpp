@@ -60,9 +60,7 @@ CAVInputStream::CAVInputStream(void)
 	m_pVidFmtCtx = NULL;
 	m_pAudFmtCtx = NULL;
 	m_pInputFormat = NULL;
-
-	dec_pkt = NULL;
-
+	
 	m_pVideoCBFunc = NULL;
 	m_pAudioCBFunc = NULL;
 
@@ -113,6 +111,7 @@ bool  CAVInputStream::OpenInputStream()
 
 
 	int i;
+	enum AVMediaType type;
 
 	//打开Directshow设备前需要调用FFmpeg的avdevice_register_all函数，否则下面返回失败
 	m_pInputFormat = av_find_input_format("dshow");
@@ -127,6 +126,7 @@ bool  CAVInputStream::OpenInputStream()
 	if(!m_video_device.empty())
 	{
 		int res = 0;
+		type = AVMEDIA_TYPE_VIDEO;
 
 		string device_name = "video=" + m_video_device;
 
@@ -144,24 +144,47 @@ bool  CAVInputStream::OpenInputStream()
 			ATLTRACE("Couldn't find video stream information.（无法获取流信息）\n");
 			return false;
 		}
-		m_videoindex = -1;
-		for (i = 0; i < m_pVidFmtCtx->nb_streams; i++)
-		{
-			if (m_pVidFmtCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
-			{
-				m_videoindex = i;
-				break;
-			}
+
+		int ret = av_find_best_stream(m_pVidFmtCtx, type, -1, -1, NULL, 0);
+		if (ret < 0) {
+			fprintf(stderr, "Could not find %s stream\n",
+				av_get_media_type_string(type));
+			return ret;
+		}
+		else {
+			m_videoindex = ret;
+
 		}
 
-		if (m_videoindex == -1)
-		{
-			ATLTRACE("Couldn't find a video stream.（没有找到视频流）\n");
+		AVStream *st = m_pVidFmtCtx->streams[m_videoindex];
+
+		/* find decoder for the stream */
+		AVCodec *dec = avcodec_find_decoder(st->codecpar->codec_id);
+		if (!dec) {
+			fprintf(stderr, "Failed to find %s codec\n",
+				av_get_media_type_string(type));
 			return false;
 		}
-		if (avcodec_open2(m_pVidFmtCtx->streams[m_videoindex]->codec, avcodec_find_decoder(m_pVidFmtCtx->streams[m_videoindex]->codec->codec_id), NULL) < 0)
-		{
-			ATLTRACE("Could not open video codec.（无法打开解码器）\n");
+
+		/* Allocate a codec context for the decoder */
+		m_video_dec_ctx = avcodec_alloc_context3(dec);
+		if (!m_video_dec_ctx) {
+			fprintf(stderr, "Failed to allocate the %s codec context\n",
+				av_get_media_type_string(type));
+			return false;
+		}
+
+		/* Copy codec parameters from input stream to output codec context */
+		if ((ret = avcodec_parameters_to_context(m_video_dec_ctx, st->codecpar)) < 0) {
+			fprintf(stderr, "Failed to copy %s codec parameters to decoder context\n",
+				av_get_media_type_string(type));
+			return false;
+		}
+
+		/* Init the decoders */
+		if ((ret = avcodec_open2(m_video_dec_ctx, dec, NULL)) < 0) {
+			fprintf(stderr, "Failed to open %s codec\n",
+				av_get_media_type_string(type));
 			return false;
 		}
 	}
@@ -170,6 +193,8 @@ bool  CAVInputStream::OpenInputStream()
 
 	if(!m_audio_device.empty())
 	{
+		type = AVMEDIA_TYPE_AUDIO;
+
 		string device_name = "audio=" + m_audio_device;
 
 		string device_name_utf8 = AnsiToUTF8(device_name.c_str(), device_name.length());  //转成UTF-8，解决设备名称包含中文字符出现乱码的问题
@@ -187,23 +212,48 @@ bool  CAVInputStream::OpenInputStream()
 			ATLTRACE("Couldn't find audio stream information.（无法获取流信息）\n");
 			return false;
 		}
-		m_audioindex = -1;
-		for (i = 0; i < m_pAudFmtCtx->nb_streams; i++)
-		{
-			if (m_pAudFmtCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO)
-			{
-				m_audioindex = i;
-				break;
-			}
+		
+
+		int ret = av_find_best_stream(m_pAudFmtCtx, type, -1, -1, NULL, 0);
+		if (ret < 0) {
+			fprintf(stderr, "Could not find %s stream\n",
+				av_get_media_type_string(type));
+			return ret;
 		}
-		if (m_audioindex == -1)
-		{
-			ATLTRACE("Couldn't find a audio stream.（没有找到音频流）\n");
+		else {
+			m_audioindex = ret;
+
+		}
+
+		AVStream *st = m_pAudFmtCtx->streams[m_audioindex];
+
+		/* find decoder for the stream */
+		AVCodec *dec = avcodec_find_decoder(st->codecpar->codec_id);
+		if (!dec) {
+			fprintf(stderr, "Failed to find %s codec\n",
+				av_get_media_type_string(type));
 			return false;
 		}
-		if (avcodec_open2(m_pAudFmtCtx->streams[m_audioindex]->codec, avcodec_find_decoder(m_pAudFmtCtx->streams[m_audioindex]->codec->codec_id), NULL) < 0)
-		{
-			ATLTRACE("Could not open audio codec.（无法打开解码器）\n");
+
+		/* Allocate a codec context for the decoder */
+		m_audio_dec_ctx = avcodec_alloc_context3(dec);
+		if (!m_audio_dec_ctx) {
+			fprintf(stderr, "Failed to allocate the %s codec context\n",
+				av_get_media_type_string(type));
+			return false;
+		}
+
+		/* Copy codec parameters from input stream to output codec context */
+		if ((ret = avcodec_parameters_to_context(m_audio_dec_ctx, st->codecpar)) < 0) {
+			fprintf(stderr, "Failed to copy %s codec parameters to decoder context\n",
+				av_get_media_type_string(type));
+			return false;
+		}
+
+		/* Init the decoders */
+		if ((ret = avcodec_open2(m_audio_dec_ctx, dec, NULL)) < 0) {
+			fprintf(stderr, "Failed to open %s codec\n",
+				av_get_media_type_string(type));
 			return false;
 		}
 	}
@@ -310,13 +360,72 @@ DWORD WINAPI CAVInputStream::CaptureVideoThreadFunc(LPVOID lParam)
 	return 0;
 }
 
+int CAVInputStream::decode_packet(AVCodecContext *dec, const AVPacket *pkt)
+{
+	int ret = 0;
+	AVFrame *frame = NULL;
+
+	// submit the packet to the decoder
+	ret = avcodec_send_packet(dec, pkt);
+	if (ret < 0) {
+		fprintf(stderr, "Error submitting a packet for decoding (%s)\n", av_err2str(ret));
+		return ret;
+	}
+
+	// get all the available frames from the decoder
+	while (ret >= 0) {
+		frame = av_frame_alloc();
+		if (!frame)
+		{
+			ret = AVERROR(ENOMEM);
+			return ret;
+		}
+
+		ret = avcodec_receive_frame(dec, frame);
+		if (ret < 0) {
+			// those two return values are special and mean there is no output
+			// frame available, but there were no errors during decoding
+			if (ret == AVERROR_EOF || ret == AVERROR(EAGAIN))
+				return 0;
+
+			fprintf(stderr, "Error during decoding (%s)\n", av_err2str(ret));
+			return ret;
+		}
+
+		// write the frame data to output file
+		if (dec->codec->type == AVMEDIA_TYPE_VIDEO) {
+			if (m_pVideoCBFunc)
+			{
+				CAutoLock lock(&m_WriteLock);
+
+				m_pVideoCBFunc(m_pVidFmtCtx->streams[m_videoindex], m_pVidFmtCtx->streams[m_videoindex]->codec->pix_fmt, frame, av_gettime() - m_start_time);
+			}
+
+			av_frame_free(&frame);
+		}
+		else if (dec->codec->type == AVMEDIA_TYPE_AUDIO) {
+			if (m_pAudioCBFunc)
+			{
+				CAutoLock lock(&m_WriteLock);
+
+				m_pAudioCBFunc(m_pAudFmtCtx->streams[m_audioindex], frame, av_gettime() - m_start_time);
+			}
+
+			av_frame_free(&frame);
+		}
+
+		av_frame_unref(frame);
+		if (ret < 0)
+			return ret;
+	}
+
+	return 0;
+}
+
 int  CAVInputStream::ReadVideoPackets()
 {
-	if(dec_pkt == NULL)
-	{
-		////prepare before decode and encode
-		dec_pkt = (AVPacket *)av_malloc(sizeof(AVPacket));
-	}
+	////prepare before decode and encode
+	AVPacket *dec_pkt = (AVPacket *)av_malloc(sizeof(AVPacket));
 
 	int encode_video = 1;
 	int ret;
@@ -331,37 +440,11 @@ int  CAVInputStream::ReadVideoPackets()
 		AVFrame * pframe = NULL;
 		if ((ret = av_read_frame(m_pVidFmtCtx, dec_pkt)) >= 0)
 		{
-			pframe = av_frame_alloc();
-			if (!pframe) 
-			{
-				ret = AVERROR(ENOMEM);
-				return ret;
-			}
-			int dec_got_frame = 0;
-			ret = avcodec_decode_video2(m_pVidFmtCtx->streams[dec_pkt->stream_index]->codec, pframe, &dec_got_frame, dec_pkt);
-			if (ret < 0) 
-			{
-				av_frame_free(&pframe);
-				av_log(NULL, AV_LOG_ERROR, "Decoding failed\n");
+			ret = decode_packet(m_video_dec_ctx, dec_pkt);
+
+			av_packet_unref(dec_pkt);
+			if (ret < 0)
 				break;
-			}
-			if (dec_got_frame)
-			{
-                if(m_pVideoCBFunc)
-				{
-					CAutoLock lock(&m_WriteLock);
-
-					m_pVideoCBFunc(m_pVidFmtCtx->streams[dec_pkt->stream_index], m_pVidFmtCtx->streams[m_videoindex]->codec->pix_fmt, pframe, av_gettime() - m_start_time);
-				}
-
-				av_frame_free(&pframe);
-			}
-			else 
-			{
-				av_frame_free(&pframe);
-			}
-
-			av_free_packet(dec_pkt);
 		}
 		else
 		{
@@ -434,31 +517,14 @@ int CAVInputStream::ReadAudioPackets()
 			}					
 		}
 
-		/**
-		* Decode the audio frame stored in the temporary packet.
-		* The input audio stream decoder is used to do this.
-		* If we are at the end of the file, pass an empty packet to the decoder
-		* to flush it.
-		*/
-		if ((ret = avcodec_decode_audio4(m_pAudFmtCtx->streams[m_audioindex]->codec, input_frame, &dec_got_frame_a, &input_packet)) < 0)
-		{
-			ATLTRACE("Could not decode audio frame\n");
-			return ret;
-		}
+		ret = decode_packet(m_audio_dec_ctx, &input_packet);
+
 		av_packet_unref(&input_packet);
-		/** If there is decoded data, convert and store it */
-		if (dec_got_frame_a) 
-		{
-		    if(m_pAudioCBFunc)
-			{
-				CAutoLock lock(&m_WriteLock);
-
-				m_pAudioCBFunc(m_pAudFmtCtx->streams[m_audioindex], input_frame, av_gettime() - m_start_time);
-			}
-		}
-
-		av_frame_free(&input_frame);
-		
+		if (ret < 0)
+			break;
+			
+		av_packet_unref(&input_packet);
+				
 
 	}//while
 

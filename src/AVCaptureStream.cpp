@@ -92,13 +92,12 @@ LRESULT  OnStartStream(WPARAM wParam, LPARAM lParam)
 }
 
 int main(int argc, char *argv[]) {
-	// 初始化FFMPEG库
-	av_register_all();
+	// 初始化FFMPEG库，新版本只需要下面2个初始化
 	avformat_network_init();
 	avdevice_register_all();
 
-	//m_InputStream.SetVideoCaptureDevice("Logi C270 HD WebCam");
-	m_InputStream.SetAudioCaptureDevice("麦克风 (Logi C270 HD WebCam)");
+	m_InputStream.SetVideoCaptureDevice("Logi C270 HD WebCam");
+	//m_InputStream.SetAudioCaptureDevice("麦克风 (Logi C270 HD WebCam)");
 	OnStartStream(0, 0);
 
 	while (true)

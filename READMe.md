@@ -22,3 +22,5 @@ Visual Studio 2017， Windows 10，Thinkpad X13 自带摄像头/话筒，台式机+罗技c270 U
 	      环境：PATH=%PATH%;C:\ffmpeg-4.3.2\bin
 	  ```
 
+## 三、注意事项
+输入源在 main() 函数设置，同时只能用视频或音频。对代码来说，视频和音频是单独的设备

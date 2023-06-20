@@ -31,6 +31,8 @@ public:
 	bool  GetVideoInputInfo(int & width, int & height, int & framerate, AVPixelFormat & pixFmt);
 	bool  GetAudioInputInfo(AVSampleFormat & sample_fmt, int & sample_rate, int & channels);
 
+	int decode_packet(AVCodecContext *dec, const AVPacket *pkt);
+
 protected:
 	static DWORD WINAPI CaptureVideoThreadFunc(LPVOID lParam);
 	static DWORD WINAPI CaptureAudioThreadFunc(LPVOID lParam);
@@ -49,7 +51,8 @@ protected:
     AVFormatContext *m_pAudFmtCtx;
     AVInputFormat  *m_pInputFormat;
 
-    AVPacket *dec_pkt;
+	AVCodecContext *m_video_dec_ctx;
+	AVCodecContext *m_audio_dec_ctx;
 
 	HANDLE m_hCapVideoThread, m_hCapAudioThread; //线程句柄
 	bool   m_exit_thread; //退出线程的标志变量

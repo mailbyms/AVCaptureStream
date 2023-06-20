@@ -334,6 +334,8 @@ int CAVOutputStream::write_video_frame(AVStream * input_st, enum AVPixelFormat p
 		//if ((pts_time > now_time) && ((vid_next_pts + pts_time - now_time)<aud_next_pts))
 		//	av_usleep(pts_time - now_time);
 		
+		printf("write video frame, package size:%d\n", enc_pkt.size);
+
         ret = av_interleaved_write_frame(ofmt_ctx, &enc_pkt);
 		if(ret < 0)	
 		{
