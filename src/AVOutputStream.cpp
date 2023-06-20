@@ -221,6 +221,7 @@ bool CAVOutputStream::OpenOutputStream(const char* out_path)
 		* Allocate as many pointers as there are audio channels.
 		* Each pointer will later point to the audio samples of the corresponding
 		* channels (although it may be NULL for interleaved formats).
+		* 这里申请的只是存储指针的十来个字节的内存。音频数据用的内存在 write_audio_frame()里用到时才申请
 		*/
 		if (!(m_converted_input_samples = (uint8_t**)calloc(pCodecCtx_a->channels, sizeof(**m_converted_input_samples)))) 
 		{
@@ -356,7 +357,7 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 		m_first_aud_time = lTimeStamp;
 	}
 
-	const int output_frame_size = pCodecCtx_a->frame_size;
+	const int output_frame_size = pCodecCtx_a->frame_size;	// avcodec_open2(pCodecCtx_a, pCodec_a, NULL) 里，FFMPEG 设置了pCodecCtx_a->frame_size =1024
 
 	AVRational time_base_q = { 1, AV_TIME_BASE };
 	int ret;
@@ -400,13 +401,12 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 	/**
 	* Allocate memory for the samples of all channels in one consecutive
 	* block for convenience.
+	* 用完后面要释放掉
 	*/
-
 	if ((ret = av_samples_alloc(m_converted_input_samples, NULL, pCodecCtx_a->channels, input_frame->nb_samples, pCodecCtx_a->sample_fmt, 0)) < 0)
 	{
 		printf("Could not allocate converted input samples\n");
-		av_freep(&(*m_converted_input_samples)[0]);
-		free(*m_converted_input_samples);
+		av_freep(&m_converted_input_samples[0]);
 		return ret;
 	}
 	
@@ -442,6 +442,8 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 		return AVERROR_EXIT;
 	}
 
+	// 释放掉上面 av_samples_alloc 申请的内存
+	av_freep(&m_converted_input_samples[0]);
 
 	int64_t timeinc = (int64_t)pCodecCtx_a->frame_size * AV_TIME_BASE /(int64_t)(input_st->codecpar->sample_rate);
     
@@ -451,6 +453,7 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 		m_nLastAudioPresentationTime = lTimeStamp - timeshift; 
 	}
 	
+	int c = av_audio_fifo_size(m_fifo);
 	while (av_audio_fifo_size(m_fifo) >= output_frame_size)
 		/**
 		* Take one frame worth of audio samples from the FIFO buffer,
@@ -480,6 +483,11 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 		* Default channel layouts based on the number of channels
 		* are assumed for simplicity.
 		*/
+		/* 官方的example encode_audio.c：
+			frame->nb_samples = c->frame_size; 
+			frame->format = c->sample_fmt; 
+			frame->channel_layout = c->channel_layout;
+		*/
 		output_frame->nb_samples = frame_size;
 		output_frame->channel_layout = pCodecCtx_a->channel_layout;
 		output_frame->format = pCodecCtx_a->sample_fmt;
@@ -506,6 +514,13 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 			return AVERROR_EXIT;
 		}
 
+		/* send the frame for encoding */
+		ret = avcodec_send_frame(pCodecCtx_a, output_frame);
+		if (ret < 0) {
+			fprintf(stderr, "Error sending the frame to the encoder\n");
+			exit(1);
+		}
+
 		/** Encode one frame worth of audio samples. */
 		/** Packet used for temporary storage. */
 		AVPacket output_packet;
@@ -513,47 +528,22 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 		output_packet.data = NULL;
 		output_packet.size = 0;
 
-		int enc_got_frame_a = 0;
+		/* read all the available output packets (in general there may be any number of them */
+		while (ret >= 0) {
+			ret = avcodec_receive_packet(pCodecCtx_a, &output_packet);
+			if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+				break;
+			else if (ret < 0) {
+				fprintf(stderr, "Error encoding audio frame\n");
+				exit(1);
+			}
 
-		/**
-		* Encode the audio frame and store it in the temporary packet.
-		* The output audio stream encoder is used to do this.
-		*/
-		if ((ret = avcodec_encode_audio2(pCodecCtx_a, &output_packet, output_frame, &enc_got_frame_a)) < 0) 
-		{
-			printf("Could not encode frame\n");
-			av_packet_unref(&output_packet);
-			return ret;
-		}
-
-
-		/** Write one audio frame from the temporary packet to the output file. */
-		if (enc_got_frame_a)
-		{
 			//output_packet.flags |= AV_PKT_FLAG_KEY;
 			output_packet.stream_index = audio_st->index;
 
-#if 0
-			AVRational r_framerate1 = { input_st->codec->sample_rate, 1 };// { 44100, 1};
-			//int64_t calc_duration = (double)(AV_TIME_BASE)*(1 / av_q2d(r_framerate1));  //内部时间戳
-			int64_t calc_pts = (double)m_nb_samples * (AV_TIME_BASE)*(1 / av_q2d(r_framerate1));
+			output_packet.pts = av_rescale_q(m_nLastAudioPresentationTime, time_base_q, audio_st->time_base);			
 
-			output_packet.pts = av_rescale_q(calc_pts, time_base_q, audio_st->time_base);
-			//output_packet.dts = output_packet.pts;
-			//output_packet.duration = output_frame->nb_samples;
-#else
-			output_packet.pts = av_rescale_q(m_nLastAudioPresentationTime, time_base_q, audio_st->time_base);
-
-#endif
-
-			//printf("audio pts : %ld\n", output_packet.pts);
-
-			//int64_t pts_time = av_rescale_q(output_packet.pts, time_base, time_base_q);
-			//int64_t now_time = av_gettime() - start_time;
-			//if ((pts_time > now_time) && ((aud_next_pts + pts_time - now_time)<vid_next_pts))
-			//	av_usleep(pts_time - now_time);
-
-			printf("write frame, package size:%d\n", output_packet.size);
+			printf("write audio frame, package size:%d\n", output_packet.size);
 
 			/*
 			av_interleaved_write_frame() 在写出数据之前必须将数据保存在内存中。交错是获取多个流(例如一个音频流，一个视频流)并以单调顺序序列化它们的过程。
@@ -564,7 +554,7 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 			//if ((ret = av_interleaved_write_frame(ofmt_ctx, &output_packet)) < 0) 
 			if ((ret = av_write_frame(ofmt_ctx, &output_packet)) < 0)
 			{
-				char tmpErrString[128] = {0};
+				char tmpErrString[128] = { 0 };
 				printf("Could not write audio frame, error: %s\n", av_make_error_string(tmpErrString, AV_ERROR_MAX_STRING_SIZE, ret));
 				av_packet_unref(&output_packet);
 				return ret;
@@ -572,8 +562,7 @@ int  CAVOutputStream::write_audio_frame(AVStream *input_st, AVFrame *input_frame
 
 			av_packet_unref(&output_packet);
 		}//if (enc_got_frame_a)
-
-
+			   		 
 		m_nb_samples += output_frame->nb_samples;
 
 		m_nLastAudioPresentationTime += timeinc;
@@ -596,10 +585,10 @@ void  CAVOutputStream::CloseOutput()
 		}
 	}
 
-    if (video_st)
-        avcodec_close(video_st->codec);
-    if (audio_st)
-        avcodec_close(audio_st->codec);
+    if (pCodecCtx)
+		avcodec_free_context(&pCodecCtx);
+    if (pCodecCtx_a)
+		avcodec_free_context(&pCodecCtx_a);
 
 	// TODO 对应 OpenOutputStream 里的 av_image_alloc 
     if(pFrameYUV && pFrameYUV->data)
@@ -610,7 +599,7 @@ void  CAVOutputStream::CloseOutput()
 	if (m_converted_input_samples) 
 	{
 		av_freep(&m_converted_input_samples[0]);
-		//free(converted_input_samples);
+		free(m_converted_input_samples);
 		m_converted_input_samples = NULL;
 	}
 
@@ -619,6 +608,13 @@ void  CAVOutputStream::CloseOutput()
 		av_audio_fifo_free(m_fifo);
 		m_fifo = NULL;
 	}
+
+	if (aud_convert_ctx)
+	{
+		swr_free(&aud_convert_ctx);
+		aud_convert_ctx = NULL;
+	}
+
 	if(ofmt_ctx)
         avio_close(ofmt_ctx->pb);
 

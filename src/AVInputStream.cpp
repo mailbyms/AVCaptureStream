@@ -436,7 +436,6 @@ int  CAVInputStream::ReadVideoPackets()
 		if (m_exit_thread)
 			break;
 
-		AVFrame * pframe = NULL;
 		if ((ret = av_read_frame(m_pVidFmtCtx, dec_pkt)) >= 0)
 		{
 			ret = decode_packet(m_video_dec_ctx, dec_pkt);
@@ -482,18 +481,7 @@ int CAVInputStream::ReadAudioPackets()
 	{
 		if (m_exit_thread)
 		   break;
-
-		/**
-		* Decode one frame worth of audio samples, convert it to the
-		* output sample format and put it into the FIFO buffer.
-		*/
-		AVFrame *input_frame = av_frame_alloc();
-		if (!input_frame)
-		{
-			ret = AVERROR(ENOMEM);
-			return ret;
-		}			
-
+		
 		/** Decode one frame worth of audio samples. */
 		/** Packet used for temporary storage. */
 		AVPacket input_packet;
@@ -520,10 +508,7 @@ int CAVInputStream::ReadAudioPackets()
 
 		av_packet_unref(&input_packet);
 		if (ret < 0)
-			break;
-			
-		av_packet_unref(&input_packet);
-				
+			break;	
 
 	}//while
 
@@ -557,7 +542,7 @@ bool  CAVInputStream::GetAudioInputInfo(AVSampleFormat & sample_fmt, int & sampl
 {
 	if(m_audioindex != -1)
 	{
-		AVStream *stream = m_pVidFmtCtx->streams[m_audioindex];
+		AVStream *stream = m_pAudFmtCtx->streams[m_audioindex];
 		sample_fmt = (AVSampleFormat)stream->codecpar->format;
 		sample_rate = stream->codecpar->sample_rate;
 		channels = stream->codecpar->channels;
