@@ -1,26 +1,30 @@
-## һ����Ŀ��Դ
-- ԭʼ��Ŀ�������� csdn ���أ�https://blog.csdn.net/zhoubotong2012/article/details/79338093    
-- �޸��
-  - ȥ����Ŀ����� EnumDevice.dll �о�ϵͳ���豸���߼������� github ��һ����Դ���ࣺhttps://github.com/mailbyms/OpenCVDeviceEnumerator
-  - MainFrm.cpp ��������ļ���ȡ����ļ�������Ϊ�̶�ֵ capture.mkv
+## 一、项目来源
+- 原始项目代码来自 csdn 下载：https://blog.csdn.net/zhoubotong2012/article/details/79338093    
+- 修改项：
+  - 去掉项目里调用 EnumDevice.dll 列举系统的设备的逻辑，改用 github 另一个开源的类：https://github.com/mailbyms/OpenCVDeviceEnumerator
+  - MainFrm.cpp 里从配置文件读取输出文件名，改为固定值 capture.mkv
 
 
-## ������Ŀ����
-Visual Studio 2017�� Windows 10��Thinkpad X13 �Դ�����ͷ/��Ͳ��̨ʽ��+�޼�c270 USB ����ͷ�� ��������
-- ��Ŀԭ���Դ��� ffmpeg ���� 32 λ�ģ��汾Ϊ December 5, 2014, FFmpeg 2.5 https://ffmpeg.org/index.html#news ���ָ�Ϊ 64 λ FFmpeg 4.3.2��������к������ɵľ��棬�ɺ���
-- ���� FFMPEG 64λ SDK (https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-4.3.2-full_build-shared.7z)������ѹ�� C �̸�Ŀ¼��
+## 二、项目建立
+Visual Studio 2017， Windows 10，Thinkpad X13 自带摄像头/话筒，台式机+罗技c270 USB 摄像头， 正常运行
+- 项目原来自带的 ffmpeg 库是 32 位的，版本为 December 5, 2014, FFmpeg 2.5 https://ffmpeg.org/index.html#news 。现改为 64 位 FFmpeg 4.3.2，及使用新的API调用方式
+- 下载 FFMPEG 64位 SDK (https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-4.3.2-full_build-shared.7z)，并解压到 C 盘根目录下
 
-- IDE ���� FFMPEG SDK:
+- IDE 添加 FFMPEG SDK:
 	
-	- ��Ŀ���ԣ��л��� Debug - x64
+	- 项目属性，切换到 Debug - x64
 	  ```
 	  C/C++
-	      ����->����Ŀ¼������ ffmpeg �� include Ŀ¼������"C:\ffmpeg-4.3.2\include"
-	  ������
-	      ����->���ӿ�Ŀ¼������ ffmpeg �� lib Ŀ¼������"C:\ffmpeg-4.3.2\lib"
-	  ����
-	      ������PATH=%PATH%;C:\ffmpeg-4.3.2\bin
+	      常规->附加目录：增加 ffmpeg 的 include 目录，例如"C:\ffmpeg-4.3.2\include"
+	  链接器
+	      常规->附加库目录：增加 ffmpeg 的 lib 目录，例如"C:\ffmpeg-4.3.2\lib"
+	  调试
+	      环境：PATH=%PATH%;C:\ffmpeg-4.3.2\bin
 	  ```
 
-## ����ע������
-����Դ�� main() �������ã�ͬʱֻ������Ƶ����Ƶ���Դ�����˵����Ƶ����Ƶ�ǵ������豸
+## 三、项目运行
+输入源在 main() 函数设置，同时只能用视频或音频。对代码来说，视频和音频是单独的设备  
+运行程序，会在当前目录生成 `test.sdp` 文件，使用 ffplay 播放：
+```
+ffplay -protocol_whitelist file,udp,rtp test.sdp
+```
